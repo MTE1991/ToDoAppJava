@@ -1,7 +1,14 @@
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -48,6 +55,7 @@ public class ToDoListApp {
         frame.add(taskScrollPane, BorderLayout.CENTER);
 
         // Add action listener to the add button
+        // Inside your addActionListener for the "Add Task" button
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -55,8 +63,21 @@ public class ToDoListApp {
                 Date date = (Date) dateSpinner.getValue();
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 if (!task.isEmpty()) {
+                    // Add task to the list model
                     taskListModel.addElement(task + " - " + formatter.format(date));
                     taskInput.setText("");
+                    
+                    // Write task to the CSV file
+                    try {
+                        String filename = "tasks.csv";
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
+                        writer.write(task + "," + formatter.format(date) + "\n");
+                        writer.close();
+                        System.out.println("Task added successfully to " + filename); // For debugging purposes
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        System.err.println("Error occurred while writing to CSV file."); // Error message
+                    }
                 }
             }
         });
@@ -111,6 +132,12 @@ public class ToDoListApp {
                         try {
                             Date taskDate = formatter.parse(parts[1]);
                             if (now.after(taskDate)) {
+                                // Alarm to be played when task is due
+                                File soundFile = new File("alarm.wav"); // Replace "alarm.wav" with your filename
+                                AudioInputStream ais = AudioSystem. getAudioInputStream(soundFile);
+                                Clip clip = AudioSystem. getClip();
+                                clip.open(ais);
+                                clip.start(); // Start alarm
                                 JOptionPane.showMessageDialog(frame, "Task due: " + parts[0]);
                                 taskListModel.remove(i);
                             }
